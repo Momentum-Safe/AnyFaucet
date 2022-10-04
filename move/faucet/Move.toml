@@ -1,0 +1,11 @@
+[package]
+name = "Faucet"
+version = "0.0.0"
+upgrade_policy = "compatible"
+
+[addresses]
+# should fill in the correct address
+faucet = "fa258453e05d09a4e354e060ad6bbde2bdd6e230bb9f5594a84fc717a5c53606"
+
+[dependencies]
+AptosFramework = { git = "https://github.com/aptos-labs/aptos-core.git", subdir = "aptos-move/framework/aptos-framework/", rev = "devnet" }
