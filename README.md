@@ -8,6 +8,12 @@ In common practice, a faucet of a certain coin on Aptos will require a dedicated
 
 `AnyFaucet` propose a serverless solution that not a dedicated server is needed to handle mint request, but only interact with smart contract. For details, please check out the [code](https://github.com/Momentum-Safe/AnyFaucet/blob/main/move/faucet/sources/faucet.move).
 
+## FaucetCoin vs FreeCoin
+AnyFaucet can work in one of two modes: `FaucetCoin` mode or `FreeCoin` mode.  
+The difference between the two is how to claim test coins.  
+In `FaucetCoin` mode, AnyFaucet act as `coin factory` and `coin minter`. To mint coins, you should call `AnyFauct.claim<CoinType>(...)`.  
+In `FreeCoin` mode, AnyFaucet just act as `coin factory`, and `coin minter` is coin itself! To mint coins, you should call `coin.claim(...)`.
+
 ## Install
 run `npm install` or `yarn`
 
@@ -18,7 +24,8 @@ run `npm install` or `yarn`
 
 ## Deploy Faucet
 1. deploy: `yarn deploy`
-2. init faucet: `yarn faucet_init`
+2. init faucet: `yarn faucet_init [$useFreeCoin]`
+   - `useFreeCoin`: 'true' will work in `FreeCoin` mode, omit or 'false' will work in `FaucetCoin` mode.
 
 ## Create a New Faucet Token
 cmd: `yarn coin_new $name $symbol $decimals $monitor_supply $mint_rate`  
@@ -29,7 +36,7 @@ cmd: `yarn coin_list`
 example output:
 ```
 ---------------------------------------------------------------------------------------------------- 0
-coin type: 0xb56ce9aa82423955426137b1cb13cf1a579347a5dd89a7ed24fa55d3dd8b3968::TestCoin::Coin
+coin type: 0xb56ce9aa82423955426137b1cb13cf1a579347a5dd89a7ed24fa55d3dd8b3968::faucet_coin::Coin
 coin meta: {
   decimals: 8,
   mint_rate: '10000',
@@ -41,7 +48,7 @@ coin meta: {
 
 ## Register&Claim Faucet Token
 cmd: `yarn coin_claim $coin_type`  
-example: `yarn coin_claim 0xb56ce9aa82423955426137b1cb13cf1a579347a5dd89a7ed24fa55d3dd8b3968::TestCoin::Coin`
+example: `yarn coin_claim 0xb56ce9aa82423955426137b1cb13cf1a579347a5dd89a7ed24fa55d3dd8b3968::faucet_coin::Coin`
 
 ## Disclaimer
 
