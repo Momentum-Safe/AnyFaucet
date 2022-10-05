@@ -36,11 +36,12 @@
   "scripts": {
     "local-node": "aptos node run-local-testnet --with-faucet --force-restart",
     "local-init": "aptos init --profile local --rest-url http://localhost:8080 --faucet-url http://localhost:8081",
+    "local-faucet": "aptos account fund-with-faucet  --profile local --amount 10000000 --account",
     "local-deploy": "yarn deploy --profile local",
     "cli-leader": "ts-node src/cli/main.ts -l",
     "cli-follower": "ts-node src/cli/main.ts",
     "faucet": "aptos account fund-with-faucet --amount 10000000 --account",
-    "deploy": "aptos move publish --package-dir ./move/faucet --max-gas=8000 --override-size-check --included-artifacts none --assume-yes",
+    "deploy": "aptos move publish --package-dir ./move/Faucet --max-gas=8000 --override-size-check --included-artifacts none --assume-yes",
     "faucet_init": "source .env && ts-node faucet_init.ts",
     "coin_new": "source .env && ts-node coin_new.ts",
     "coin_claim": "source .env && ts-node coin_claim.ts",

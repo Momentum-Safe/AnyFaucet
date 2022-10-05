@@ -1,12 +1,12 @@
 [package]
-name = "Coin"
+name = "FaucetCoin"
 version = "0.0.0"
 upgrade_policy = "compatible"
 
 [addresses]
 # do not need to fill in an address
-coin = "_"
+faucet_coin = "_"
 
 [dependencies]
-Faucet = { local = "../faucet" }
+Faucet = { local = "../Faucet" }
 AptosFramework = { git = "https://github.com/aptos-labs/aptos-core.git", subdir = "aptos-move/framework/aptos-framework/", rev = "devnet" }

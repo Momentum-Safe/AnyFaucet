@@ -1,26 +1,18 @@
-import fs from "fs";
 import {HexString} from "aptos";
 import {DEFAULT_NETWORK} from "./lib/config";
 import {Provider} from "./lib/provider";
-import {AccountImpl} from "./lib/account";
-import YAML from 'yaml';
 import {CoinInfo, CoinList} from "./facuetTypes";
 
 const provider = new Provider(DEFAULT_NETWORK);
-
-function getAccount(path: string, profile = 'default') {
-    const config = fs.readFileSync(path);
-    const prikey = YAML.parse(config.toString()).profiles[profile].private_key;
-    return new AccountImpl(Buffer.from(prikey.slice(2), 'hex'));
-}
+const FAUCET_ADDRESS = new HexString((process.env as any).FAUCET);
 
 async function getCoinList(address: HexString): Promise<CoinList> {
-    const resource = await provider.getAccountResource(address, `${address.hex()}::Faucet::CoinList`);
+    const resource = await provider.getAccountResource(address, `${address.hex()}::faucet::CoinList`);
     return resource.data as any;
 }
 
 async function getCoinInfo(contract: HexString, coin: HexString): Promise<CoinInfo> {
-    const resource = await provider.getAccountResource(coin, `${contract.hex()}::Faucet::CoinInfo`);
+    const resource = await provider.getAccountResource(coin, `${contract.hex()}::faucet::CoinInfo`);
     const coinInfo = resource.data as CoinInfo;
     const f = (hex: string) => Buffer.from(hex.slice(2), 'hex').toString();
     coinInfo.name = f(coinInfo.name);
@@ -29,12 +21,12 @@ async function getCoinInfo(contract: HexString, coin: HexString): Promise<CoinIn
 }
 
 async function main() {
-    const account = getAccount('./.aptos/config.yaml');
-    const coin_list = await getCoinList(account.address());
-    const coin_infos = await Promise.all(coin_list.coins.map(coin => getCoinInfo(account.address(), new HexString(coin))));
+    const coin_list = await getCoinList(FAUCET_ADDRESS);
+    const coin_infos = await Promise.all(coin_list.coins.map(coin => getCoinInfo(FAUCET_ADDRESS, new HexString(coin))));
     coin_list.coins.forEach((coin, index) => {
         console.log('-'.repeat(100), index);
-        console.log('coin type:', `${coin}::TestCoin::Coin`);
+        console.log('coin type(FaucetCoin):', `${coin}::faucet_coin::Coin`);
+        console.log('coin type(FreeCoin):', `${coin}::free_coin::Coin`);
         console.log('coin meta:', coin_infos[index]);
     })
 }

@@ -1,4 +1,4 @@
-module faucet::Faucet {
+module faucet::faucet {
     use std::vector;
     use aptos_framework::account::{Self, SignerCapability};
     use aptos_framework::code;
@@ -7,22 +7,24 @@ module faucet::Faucet {
     use aptos_framework::managed_coin;
     use aptos_std::type_info;
     use aptos_framework::coin;
+    use std::option::{Self, Option};
 
     const EMINT_TOO_MUCH: u64 = 1;
 
-    const MANAGER_SEED: vector<u8> = b"faucet_manager";
+    const COIN_FACTORY_SEED: vector<u8> = b"COIN FACTORY SEED";
 
+    /// should be either Faucet Coin or Free Coin
     struct CodeStore has key {
         code: vector<u8>,
         meta_info: vector<u8>,
         address_indexes: vector<u8>
     }
 
-    struct CapStore has key {
-        cap: SignerCapability,
+    struct CapStore has key,drop {
+        cap: Option<SignerCapability>,
     }
 
-    struct CoinInfo has key {
+    struct CoinInfo has key, drop {
         name: vector<u8>,
         symbol: vector<u8>,
         decimals: u8,
@@ -35,7 +37,7 @@ module faucet::Faucet {
     }
 
     fun init_module(sender: &signer) {
-        new_resource_account(sender, MANAGER_SEED);
+        new_resource_account(sender, COIN_FACTORY_SEED);
         move_to(sender, CoinList {
             coins: vector::empty()
         })
@@ -49,14 +51,14 @@ module faucet::Faucet {
         })
     }
 
-    fun get_manager(): signer acquires CapStore {
-        let manager_address = account::create_resource_address(&@faucet, MANAGER_SEED);
-        get_signer(manager_address)
+    fun get_coin_factory(): signer acquires CapStore {
+        let factory_address = account::create_resource_address(&@faucet, COIN_FACTORY_SEED);
+        get_signer(factory_address)
     }
 
     fun get_signer(addr: address): signer acquires CapStore {
         let store = borrow_global<CapStore>(addr);
-        account::create_signer_with_capability(&store.cap)
+        account::create_signer_with_capability(option::borrow(&store.cap))
     }
 
     fun get_coin_signer<CoinType>(): signer acquires CapStore {
@@ -67,36 +69,51 @@ module faucet::Faucet {
     fun new_resource_account(s: &signer, seed: vector<u8>): signer {
         let (account, cap) = account::create_resource_account(s, seed);
         move_to(&account, CapStore {
-            cap
+            cap: option::some(cap)
         });
         account
     }
 
+    fun create_coin_account(seed: vector<u8>): signer acquires CapStore {
+        let factory = get_coin_factory();
+        new_resource_account(&factory, seed)
+    }
+
+    fun publish_coin_code(new_coin: &signer) acquires CodeStore {
+        let code_store = borrow_global<CodeStore>(@faucet);
+        let new_code = get_code(code_store, signer::address_of(new_coin));
+        code::publish_package_txn(new_coin, code_store.meta_info, vector::singleton(new_code));
+    }
+
+    // optional: Coin module can call this function to get back owenr's SignerCapability, so it can self manage
+    public fun retrieve_resource_account_cap (resource: &signer):SignerCapability acquires CapStore {
+        let store = move_from<CapStore>(signer::address_of(resource));
+        option::extract(&mut store.cap)
+    }
+
     public entry fun new_faucet_coin(name: vector<u8>, symbol: vector<u8>, decimals: u8, monitor_supply: bool, mint_rate: u64) acquires CapStore, CoinList, CodeStore {
-        let manager = get_manager();
         // use name as seed
-        let coin = new_resource_account(&manager, name);
-        move_to(&coin, CoinInfo {
+        let new_coin = create_coin_account(name);
+        // must save CoinInfo before code publish
+        move_to(&new_coin, CoinInfo {
             name,
             symbol,
             decimals,
             monitor_supply,
             mint_rate
         });
-        let code_store = borrow_global<CodeStore>(@faucet);
-        let new_code = get_code(code_store, signer::address_of(&coin));
-        code::publish_package_txn(&coin, code_store.meta_info, vector::singleton(new_code));
+        publish_coin_code(&new_coin);
         let coins_list = borrow_global_mut<CoinList>(@faucet);
-        vector::push_back(&mut coins_list.coins, signer::address_of(&coin))
+        vector::push_back(&mut coins_list.coins, signer::address_of(&new_coin));
     }
-
+    /// only work for Faucet Coin
     public entry fun mint<CoinType>(to: address, amount: u64) acquires CapStore, CoinInfo {
         let coin = get_coin_signer<CoinType>();
         let coin_info = borrow_global<CoinInfo>(signer::address_of(&coin));
         assert!(amount <= coin_info.mint_rate, EMINT_TOO_MUCH);
         managed_coin::mint<CoinType>(&coin, to, amount)
     }
-
+    /// only work for Faucet Coin
     public entry fun claim<CoinType>(claimer: &signer, amount: u64) acquires CapStore, CoinInfo {
         let to = signer::address_of(claimer);
         if(!coin::is_account_registered<CoinType>(to)) {
@@ -110,9 +127,9 @@ module faucet::Faucet {
         type_info::account_address(&type_info)
     }
 
-    public fun get_coin_info(s: address): (vector<u8>, vector<u8>, u8, bool) acquires CoinInfo {
+    public fun get_coin_info(s: address): (vector<u8>, vector<u8>, u8, bool, u64) acquires CoinInfo {
         let coin_info = borrow_global<CoinInfo>(s);
-        (coin_info.name, coin_info.symbol, coin_info.decimals, coin_info.monitor_supply)
+        (coin_info.name, coin_info.symbol, coin_info.decimals, coin_info.monitor_supply, coin_info.mint_rate)
     }
 
     fun get_code(code_store: &CodeStore, new_address: address): vector<u8> {
