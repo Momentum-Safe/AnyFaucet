@@ -1,8 +1,8 @@
 import {BCS, HexString, TxnBuilderTypes} from "aptos";
-import {AptosEntryTxnBuilder} from "./lib/transaction";
 import {DEFAULT_NETWORK} from "./lib/config";
 import {Provider} from "./lib/provider";
 import {AccountImpl} from "./lib/account";
+import {AnyFaucet} from "./lib/AnyFaucet";
 
 const provider = new Provider(DEFAULT_NETWORK);
 const FAUCET_ADDRESS = new HexString((process.env as any).FAUCET);
@@ -25,27 +25,10 @@ async function main() {
     await provider.fundAccount(account, 10_000_000);
     const [coinAddress, coinModule] = coin.split('::');
     const isFaucetCoin = coinModule == 'faucet_coin';
+
+    const faucet = AnyFaucet.new(FAUCET_ADDRESS, provider, isFaucetCoin).connect(account);
     console.log(`use ${isFaucetCoin?'FaucetCoin':'FreeCoin'}`);
-    const contract = isFaucetCoin ? FAUCET_ADDRESS : new HexString(coinAddress);
-    const module = isFaucetCoin ? 'faucet' : coinModule;
-    const chainID = await provider.getChainId();
-    const sn = await provider.getSequenceNumber(account);
-    const unsignedTxn = AptosEntryTxnBuilder.new(contract)
-        .from(account.address())
-        .module(module)
-        .method('claim')
-        .args([
-            BCS.bcsSerializeUint64(BigInt(amount)),
-        ])
-        .maxGas(10000n)
-        .chainId(chainID)
-        .sequenceNumber(sn);
-    if (isFaucetCoin) {
-        const token = new TxnBuilderTypes.TypeTagStruct(TxnBuilderTypes.StructTag.fromString(coin));
-        unsignedTxn.type_args([token])
-    }
-    const bcsSingedTxn = unsignedTxn.sign(account);
-    let txn = await provider.sendSignedTransactionAndWait(bcsSingedTxn);
+    const txn = await faucet.claim(new HexString(coinAddress), BigInt(amount));
     console.log('hash:', txn.hash);
     //await sleep(3000);
     const coinTag = (coin: string) => `0x1::coin::CoinStore<${coin}>`

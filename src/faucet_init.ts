@@ -7,6 +7,7 @@ import {Provider} from "./lib/provider";
 import {AccountImpl} from "./lib/account";
 import YAML from 'yaml';
 import {sha3_256} from "@noble/hashes/sha3";
+import {AnyFaucet} from "./lib/AnyFaucet";
 
 const ADDRESS_COIN = Buffer.from(sha3_256.create().update("MSAFE FAUCET").digest()).toString('hex');
 const FAUCET_ADDRESS = new HexString((process.env as any).FAUCET);
@@ -66,26 +67,12 @@ async function getFreeCoin() {
 
 async function main() {
     const account = getAccount('./.aptos/config.yaml', 'local');
-    const useFreeCoin = Boolean(process.argv[2]);
+    const useFreeCoin = process.argv[2] == 'true';
     console.log('use FreeCoin:', useFreeCoin);
     console.log(`init with ${useFreeCoin ? 'FreeCoin' : 'FaucetCoin'}...`);
     const {coin_code, coin_meta, address_indexes} = await (useFreeCoin ? getFreeCoin() : getFucetCoin());
-    const chainID = await provider.getChainId();
-    const sn = await provider.getSequenceNumber(account);
-    const bcsSingedTxn = AptosEntryTxnBuilder.new(FAUCET_ADDRESS)
-        .from(account.address())
-        .module('faucet')
-        .method('init_coin_code')
-        .args([
-            BCS.bcsSerializeBytes(coin_code),
-            BCS.bcsSerializeBytes(coin_meta),
-            BCS.bcsSerializeBytes(address_indexes),
-        ])
-        .maxGas(10000n)
-        .chainId(chainID)
-        .sequenceNumber(sn)
-        .sign(account);
-    let txn = await provider.sendSignedTransactionAndWait(bcsSingedTxn);
+    const faucet = AnyFaucet.new(FAUCET_ADDRESS, provider, !useFreeCoin).connect(account);
+    const txn = await faucet.initCode(coin_code, coin_meta, address_indexes);
     console.log('hash:', txn.hash);
 }
 
