@@ -1,8 +1,7 @@
 import {execSync} from 'child_process';
 import fs from "fs";
-import {BCS, HexString} from "aptos";
-import {AptosEntryTxnBuilder} from "./lib/transaction";
-import {DEFAULT_NETWORK} from "./lib/config";
+import {HexString} from "aptos";
+import {DEFAULT_NETWORK, Network} from "./lib/config";
 import {Provider} from "./lib/provider";
 import {AccountImpl} from "./lib/account";
 import YAML from 'yaml';
@@ -20,7 +19,7 @@ async function moveCompile(moveDir: string, name: string) {
 
 const provider = new Provider(DEFAULT_NETWORK);
 
-function getAccount(path: string, profile = 'default') {
+function getAccount(path: string, profile = DEFAULT_NETWORK == Network.Localnet ? 'local' : 'default') {
     const config = fs.readFileSync(path);
     const prikey = YAML.parse(config.toString()).profiles[profile].private_key;
     return new AccountImpl(Buffer.from(prikey.slice(2), 'hex'));
@@ -66,7 +65,7 @@ async function getFreeCoin() {
 
 
 async function main() {
-    const account = getAccount('./.aptos/config.yaml', 'local');
+    const account = getAccount('./.aptos/config.yaml');
     const useFreeCoin = process.argv[2] == 'true';
     console.log('use FreeCoin:', useFreeCoin);
     console.log(`init with ${useFreeCoin ? 'FreeCoin' : 'FaucetCoin'}...`);

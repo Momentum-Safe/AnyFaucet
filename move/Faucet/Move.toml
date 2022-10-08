@@ -5,7 +5,7 @@ upgrade_policy = "compatible"
 
 [addresses]
 # should fill in the correct address
-faucet = "f8990f32707fe7a222f16780c350a638bf8372264dc9708f51ab4d513cef1124"
+faucet = "57845a09b76b1351d1e2e2b74b4d5c118fcd7647a6bbed40addf1e5146f592fc"
 
 [dependencies]
 AptosFramework = { git = "https://github.com/aptos-labs/aptos-core.git", subdir = "aptos-move/framework/aptos-framework/", rev = "devnet" }
