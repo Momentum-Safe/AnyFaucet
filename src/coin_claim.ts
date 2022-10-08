@@ -31,8 +31,9 @@ async function main() {
     const txn = await faucet.claim(new HexString(coinAddress), BigInt(amount));
     console.log('hash:', txn.hash);
     //await sleep(3000);
-    const coinTag = (coin: string) => `0x1::coin::CoinStore<${coin}>`
-    const balance = await coin_balance(account.address(), coinTag(coin));
+    //const coinTag = (coin: string) => `0x1::coin::CoinStore<${coin}>`
+    const coinTag = faucet.getTokenResourceTag(new HexString(coinAddress));
+    const balance = await coin_balance(account.address(), coinTag);
     console.log((balance as any).coin.value);
 }
 

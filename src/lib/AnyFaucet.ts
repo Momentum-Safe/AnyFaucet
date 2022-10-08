@@ -132,6 +132,17 @@ export class AnyFaucet extends BaseModule {
         return coinInfo;
     }
 
+    /// address: token address
+    getTokenResourceTag(address: HexString) {
+        const token = this.mode == Mode.FaucetCoin ?
+            new FaucetCoin(this.provider, address) :
+            new FreeCoin(this.provider, address);
+        return AnyFaucet.getCoinResourceTag(token.resourceTag('Coin'))
+    }
+
+    static getCoinResourceTag(coinStructTag: string):string {
+        return `0x1::coin::CoinStore<${coinStructTag}>`;
+    }
     static new(address: HexString, provider: Provider, useFaucetCoin = true): AnyFaucet {
         const mode = useFaucetCoin ? Mode.FaucetCoin : Mode.FreeCoin;
         return new AnyFaucet(mode, provider, address);

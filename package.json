@@ -36,7 +36,7 @@
   "scripts": {
     "local-node": "aptos node run-local-testnet --with-faucet --force-restart",
     "local-init": "aptos init --profile local --rest-url http://localhost:8080 --faucet-url http://localhost:8081",
-    "local-faucet": "aptos account fund-with-faucet  --profile local --amount 10000000 --account",
+    "local-faucet": "aptos account fund-with-faucet --profile local --amount 10000000 --account",
     "local-deploy": "yarn deploy --profile local",
     "cli-leader": "ts-node src/cli/main.ts -l",
     "cli-follower": "ts-node src/cli/main.ts",
