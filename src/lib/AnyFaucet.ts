@@ -85,7 +85,7 @@ export class AnyFaucet extends BaseModule {
                 BCS.bcsSerializeBool(monitor_supply),
                 BCS.bcsSerializeUint64(mint_rate),
             ])
-            .maxGas(5000n)
+            .maxGas(20000n)
             .chainId(chainID)
             .sequenceNumber(sn)
             .sign(account);

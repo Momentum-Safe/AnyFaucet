@@ -1,6 +1,4 @@
-import fs from "fs";
-import {BCS, HexString} from "aptos";
-import {AptosEntryTxnBuilder} from "./lib/transaction";
+import {HexString} from "aptos";
 import {DEFAULT_NETWORK} from "./lib/config";
 import {Provider} from "./lib/provider";
 import {AccountImpl} from "./lib/account";
@@ -17,7 +15,7 @@ async function main() {
     console.log("monitor_supply:", monitor_supply);
     console.log("mint_rate:", mint_rate);
     const account = new AccountImpl();
-    await provider.fundAccount(account, 500000);
+    await provider.fundAccount(account, 2000000);
     const faucet = AnyFaucet.new(FAUCET_ADDRESS, provider).connect(account);
     const txn = await faucet.newCoin(name, symbol, Number(decimals), Boolean(monitor_supply), BigInt(mint_rate));
     console.log('hash:', txn.hash);
