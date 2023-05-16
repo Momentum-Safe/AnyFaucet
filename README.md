@@ -2,11 +2,13 @@
 
 Serverless Faucet on Aptos. Allow anyone to create aptos faucet token and mint it freely.
 
+
 ## Why this repository?
 
 In common practice, a faucet of a certain coin on Aptos will require a dedicated server to store the private key of the minter account, and handle the request from external users. However this is inefficient since it will need to setup an additional server to handle the request.
 
 `AnyFaucet` propose a serverless solution that not a dedicated server is needed to handle mint request, but only interact with smart contract. For details, please check out the [code](https://github.com/Momentum-Safe/AnyFaucet/blob/main/move/faucet/sources/faucet.move).
+
 
 ## FaucetCoin vs FreeCoin
 AnyFaucet can work in one of two modes: `FaucetCoin` mode or `FreeCoin` mode.  
@@ -17,6 +19,7 @@ To mint coins, you should call `AnyFauct.claim<CoinType>(...)`.
 
 In `FreeCoin` mode, AnyFaucet just act as `coin factory`, and `coin minter` is coin itself!  
 To mint coins, you should call `coin.claim(...)`.
+
 
 ## Install
 run `npm install` or `yarn`
